@@ -83,23 +83,6 @@ class Zotero_Users {
 	}
 	
 	
-	public static function getUserIDFromSessionID($sessionID) {
-		$sql = "SELECT userID FROM sessions WHERE id=?
-				AND UNIX_TIMESTAMP() < modified + lifetime";
-		try {
-			$userID = Zotero_WWW_DB_2::valueQuery($sql, $sessionID);
-			Zotero_WWW_DB_2::close();
-		}
-		catch (Exception $e) {
-			Z_Core::logError("WARNING: $e -- retrying on primary");
-			$userID = Zotero_WWW_DB_1::valueQuery($sql, $sessionID);
-			Zotero_WWW_DB_1::close();
-		}
-		
-		return $userID;
-	}
-	
-	
 	public static function getUsername($userID, $skipAutoAdd=false) {
 		if (!empty(self::$usernamesByID[$userID])) {
 			return self::$usernamesByID[$userID];
