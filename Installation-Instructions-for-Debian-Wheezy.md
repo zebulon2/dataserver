@@ -1,0 +1,275 @@
+# Installation Instructions for Debian Wheezy
+
+## Packages to install
+
+### dataserver
+* apache2
+* libapach2-mod-php5
+* mysql-server
+* memcached
+* zendframework
+* php5-cli
+* php5-memcache
+* php5-mysql
+* php5-curl
+
+### zss
+* apache2
+* uwsgi
+* uwsgi-plugin-psgi
+* libplack-perl
+* libdigest-hmac-perl
+* libjson-xs-perl
+* libfile-util-perl
+* libapache2-mod-uwsgi
+
+### misc
+* git
+
+## Directories
+The following directories are used:
+* `/srv/zotero/dataserver`: Zotero Dataserver
+* `/srv/zotero/zss`: ZSS
+* `/srv/zotero/storage`: Storage directory for all user and group files
+
+## Dataserver
+### Download source
+    git clone git://github.com/sualk/dataserver.git /srv/zotero/dataserver
+
+### Prepare directory rights
+    chown www-data:www-data /srv/zotero/dataserver/tmp
+
+### Zend
+Use the packaged version
+
+    cd /srv/zotero/dataserver/include
+    rm -r Zend
+    ln -s /usr/share/php/Zend/
+
+### Apache2
+* Generate SSL key and cert
+* Enable SSL support: `a2enmod ssl`
+* Enable rewrite support: `a2enmod rewrite`
+* Create `/etc/apache2/sites-available/zotero`    
+* Activate this site: `a2ensite zotero`
+* Edit `/srv/zotero/dataserver/htdocs/.htaccess`
+
+#### zotero
+    <VirtualHost *:443>
+      DocumentRoot /srv/zotero/dataserver/htdocs
+      SSLEngine on
+      SSLCertificateFile /etc/apache2/zotero.cert
+      SSLCertificateKeyFile /etc/apache2/zotero.key
+    
+      <Location /zotero/>
+        SetHandler uwsgi-handler
+        uWSGISocket /var/run/uwsgi/app/zss/socket
+        uWSGImodifier1 5
+      </Location>
+    
+      <Directory "/srv/zotero/dataserver/htdocs/">
+        Options FollowSymLinks MultiViews
+        AllowOverride All
+        Order allow,deny
+        Allow from all
+      </Directory>
+    
+      ErrorLog /srv/zotero/error.log
+      CustomLog /srv/zotero/access.log common
+    </VirtualHost>
+
+#### .htaccess
+Add the following line
+
+     RewriteCond %{SCRIPT_FILENAME} !-f
+     RewriteCond %{SCRIPT_FILENAME} !-d
+    +RewriteCond %{REQUEST_URI} !^/zotero
+     RewriteRule .* index.php [L]
+
+### MySQL
+#### Configuration
+Create `/etc/mysql/conf.d/zotero.cnf`:
+
+    [mysqld]
+    character-set-server = utf8
+    collation-server = utf8_general_ci
+    event-scheduler = ON
+    sql-mode = STRICT_ALL_TABLES
+    default-time-zone = '+0:00'
+
+#### Databases
+* Change the passwords in `/srv/zotero/dataserver/misc/setup_db`
+* Run `setup_db`
+
+### Configuration
+
+In `/srv/zotero/dataserver/include/config` the following two files need to be created.
+
+#### dbconnect.inc.php
+Copy the sample file and insert the database, database username and password as used in the `setup_db` script.
+The lines you should change are marked with a `+` at the beginning.
+
+    <?
+    function Zotero_dbConnectAuth($db) {
+            if ($db == 'master') {
+    +               $host = 'localhost';
+                    $port = 3306;
+                    $db = 'zotero_master';
+    +               $user = 'zotero';
+    +               $pass = 'foobar';
+            }
+            else if ($db == 'shard') {
+                    $host = false;
+                    $port = false;
+                    $db = false;
+    +               $user = 'zotero';
+    +               $pass = 'foobar';
+            }
+            else if ($db == 'id1') {
+    +               $host = 'localhost';
+                    $port = 3306;
+                    $db = 'zotero_ids';
+    +               $user = 'zotero';
+    +               $pass = 'foobar';
+            }
+            else if ($db == 'id2') {
+    +               $host = 'localhost';
+                    $port = 3306;
+                    $db = 'zotero_ids';
+    +               $user = 'zotero';
+    +               $pass = 'foobar';
+            }
+            else {
+                    throw new Exception("Invalid db '$db'");
+            }
+            return array('host'=>$host, 'port'=>$port, 'db'=>$db, 'user'=>$user, 'pass'=>$pass);
+    }
+    ?>
+
+#### config.inc.php
+Copy the sample file and adjust a few values. The lines you should change are marked with a `+` at the beginning.
+`host.domain.tld` should be the same as in your SSL certificate. If you use a self signed certificate the SSL validation must be deactivated.
+
+    <?
+    class Z_CONFIG {
+      public static $API_ENABLED = true;
+      public static $SYNC_ENABLED = true;
+      public static $PROCESSORS_ENABLED = true;
+      public static $MAINTENANCE_MESSAGE = 'Server updates in progress. Please try again in a few minutes.';
+      
+    + public static $TESTING_SITE = false;
+    + public static $DEV_SITE = false;
+      
+      public static $DEBUG_LOG = false;
+      
+      public static $BASE_URI = '';
+    + public static $API_BASE_URI = 'https://host.domain.tld/';
+      public static $WWW_BASE_URI = '';
+    + public static $SYNC_DOMAIN = 'sync.host.domain.tld';
+      
+      public static $AUTH_SALT = '';
+    + public static $API_SUPER_USERNAME = 'someusername';
+    + public static $API_SUPER_PASSWORD = 'somepassword';
+      
+      public static $AWS_ACCESS_KEY = '';
+    + public static $AWS_SECRET_KEY = 'yoursecretkey';
+    + public static $S3_BUCKET = 'zotero';
+    + public static $S3_ENDPOINT = 'host.domain.tld';
+    + public static $S3_USE_SSL = true;
+    + public static $S3_VALIDATE_SSL = true;
+      
+    + public static $URI_PREFIX_DOMAIN_MAP = array(
+    +   '/sync/' => 'sync.host.domain.tld'
+    + );
+      
+      public static $MEMCACHED_ENABLED = true;
+      public static $MEMCACHED_SERVERS = array(
+    +   'localhost:11211'
+      );
+      
+      public static $TRANSLATION_SERVERS = array(
+        "translation1.localdomain:1969"
+      );
+      
+      public static $CITATION_SERVERS = array(
+        "citeserver1.localdomain:8080", "citeserver2.localdomain:8080"
+      );
+      
+      public static $ATTACHMENT_SERVER_HOSTS = array("files1.localdomain", "files2.localdomain");
+      public static $ATTACHMENT_SERVER_DYNAMIC_PORT = 80;
+      public static $ATTACHMENT_SERVER_STATIC_PORT = 81;
+      public static $ATTACHMENT_SERVER_URL = "https://files.example.net";
+      public static $ATTACHMENT_SERVER_DOCROOT = "/var/www/attachments/";
+      
+      public static $STATSD_ENABLED = false;
+      public static $STATSD_PREFIX = "";
+      public static $STATSD_HOST = "monitor.localdomain";
+      public static $STATSD_PORT = 8125;
+      
+      public static $LOG_TO_SCRIBE = false;
+      public static $LOG_ADDRESS = '';
+      public static $LOG_PORT = 1463;
+      public static $LOG_TIMEZONE = 'US/Eastern';
+      public static $LOG_TARGET_DEFAULT = 'errors';
+      
+      public static $PROCESSOR_PORT_DOWNLOAD = 3455;
+      public static $PROCESSOR_PORT_UPLOAD = 3456;
+      public static $PROCESSOR_PORT_ERROR = 3457;
+      
+      public static $PROCESSOR_LOG_TARGET_DOWNLOAD = 'sync-processor-download';
+      public static $PROCESSOR_LOG_TARGET_UPLOAD = 'sync-processor-upload';
+      public static $PROCESSOR_LOG_TARGET_ERROR = 'sync-processor-error';
+      
+      public static $SYNC_DOWNLOAD_SMALLEST_FIRST = false;
+      public static $SYNC_UPLOAD_SMALLEST_FIRST = false;
+      
+      // Set some things manually for running via command line
+      public static $CLI_PHP_PATH = '/usr/bin/php';
+    + public static $CLI_DOCUMENT_ROOT = "/srv/zotero/dataserver/";
+      
+      public static $SYNC_ERROR_PATH = '/var/log/httpd/sync-errors/';
+      public static $API_ERROR_PATH = '/var/log/httpd/api-errors/';
+      
+      public static $CACHE_VERSION_ATOM_ENTRY = 1;
+      public static $CACHE_VERSION_BIB = 1;
+      public static $CACHE_VERSION_ITEM_DATA = 1;
+    }
+    ?>
+
+### Processor daemons
+The upload, download and error processor daemons need to run for syncing with the zotero clients to work.
+
+## ZSS
+
+### Download source
+    git clone git://github.com/sualk/zss.git /srv/zotero/zss
+
+### Prepare directory rights
+    chown www-data:www-data /srv/zotero/storage
+
+### Configure ZSS
+
+#### zss.psgi
+You need to adjust the path to ZSS.pm in zss.psgi. Change the line
+
+    use lib ('/path/to/ZSS.pm');
+
+to fit your installation. With zss installed to /srv/zotero/zss/ the line should look like this:
+
+    use lib ('/srv/zotero/zss/');
+
+#### ZSS.pm
+Adjust the path to your storage directory and set the secretkey to something random.
+
+    $self->{buckets}->{zotero}->{secretkey} = "yoursecretkey";
+    $self->{buckets}->{zotero}->{store} = ZSS::Store->new("/srv/zotero/storage");
+
+### Configure uwsgi
+1. In `/etc/uwsgi/apps-available` create the file `zss.yaml`
+2. Create a link in `apps-enabled` to this file
+3. Restart uwsgi
+
+#### zss.yaml
+    uwsgi:
+      plugin: psgi
+      psgi: /srv/zotero/zss/zss.psgi
