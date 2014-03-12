@@ -236,6 +236,9 @@ Copy the sample file and adjust a few values. The lines you should change are ma
     }
     ?>
 
+##### Using a different port (Optional)
+An alternative port has to be specified as part of the `$API_BASE_URI` and also in the relevant URLs of the [client patch](https://github.com/sualk/dataserver/wiki/Zotero-Client).
+
 ### Processor daemons
 The upload, download and error processor daemons need to run for syncing with the zotero clients to work.
 
