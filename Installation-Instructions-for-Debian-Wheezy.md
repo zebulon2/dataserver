@@ -310,16 +310,19 @@ Adjust the path to your storage directory and set the secretkey to something ran
 
 ## Test the installation
 
-* `https://host.domain.tld/sync/login?version=9` should result in the following output
+### Sync access
+Access to `https://host.domain.tld/sync/login?version=9` should result in the following output
 
     <response version="9" timestamp="1398715040">
       <error code="NO_USER_NAME">Username not provided</error>
     </response>
 
-* `https://host.domain.tld/zotero/` should result in the following output
+### Storage access
+Access to `https://host.domain.tld/zotero/` should result in the following output
 
     <Error><Code>SignatureDoesNotMatch</Code></Error>
 
-* `https://host.domain.tld/users/1/items` should result in the following output
+### API access
+Access to `https://host.domain.tld/users/1/items` should result in the following output
 
     Not found
