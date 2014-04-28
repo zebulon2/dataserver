@@ -25,12 +25,15 @@
 
 ### misc
 * git
+* gnutls-bin
+* runit
 
 ## Directories
 The following directories are used:
 * `/srv/zotero/dataserver`: Zotero Dataserver
 * `/srv/zotero/zss`: ZSS
 * `/srv/zotero/storage`: Storage directory for all user and group files
+* `/srv/zotero/log/{download,upload,error}`: Log files of processor daemons
 
 ## Dataserver
 ### Download source
@@ -53,6 +56,10 @@ Use the packaged version
 * Create `/etc/apache2/sites-available/zotero`    
 * Activate this site: `a2ensite zotero`
 * Edit `/srv/zotero/dataserver/htdocs/.htaccess`
+
+#### Selfsigned SSL Cert
+    certtool -p --sec-param high --outfile /etc/apache2/zotero.key
+    certtool -s --load-privkey /etc/apache2/zotero.key --outfile /etc/apache2/zotero.cert
 
 #### zotero
     <VirtualHost *:443>
@@ -98,6 +105,7 @@ Create `/etc/mysql/conf.d/zotero.cnf`:
     default-time-zone = '+0:00'
 
 #### Databases
+* Restart mysql after adding the above configuration file
 * Change the passwords in `/srv/zotero/dataserver/misc/setup_db`
 * Run `setup_db`
 
@@ -242,6 +250,29 @@ An alternative port has to be specified as part of the `$API_BASE_URI` and also 
 ### Processor daemons
 The upload, download and error processor daemons need to run for syncing with the zotero clients to work.
 
+#### Using runit
+Create the directories `/etc/sv/zotero-download`, `/etc/sv/zotero-upload` and `/etc/sv/zotero-error` with a subdirectory `log` in each one.
+Create the following file named `run` in each of the `zotero-*` dirs:
+
+    #!/bin/sh
+    
+    cd /srv/zotero/dataserver/processor/download
+    exec chpst -u www-data:www-data php5 daemon.php
+
+And the following file named `run` in each of the `log` subdirs:
+
+    #!/bin/sh
+    
+    exec svlogd -ttt /srv/zotero/log/download
+
+Replace "download" with "upload" and "error" as apropriate.
+
+To automatically start the daemons create symlinks in `/etc/service`
+
+    ln -s ../sv/zotero-download /etc/service/
+    ln -s ../sv/zotero-upload /etc/service/
+    ln -s ../sv/zotero-error /etc/service/
+
 ## ZSS
 
 ### Download source
@@ -276,3 +307,19 @@ Adjust the path to your storage directory and set the secretkey to something ran
     uwsgi:
       plugin: psgi
       psgi: /srv/zotero/zss/zss.psgi
+
+## Test the installation
+
+* `https://host.domain.tld/sync/login?version=9` should result in the following output
+
+    <response version="9" timestamp="1398715040">
+      <error code="NO_USER_NAME">Username not provided</error>
+    </response>
+
+* `https://host.domain.tld/zotero/` should result in the following output
+
+    <Error><Code>SignatureDoesNotMatch</Code></Error>
+
+* `https://host.domain.tld/users/1/items` should result in the following output
+
+    Not found
