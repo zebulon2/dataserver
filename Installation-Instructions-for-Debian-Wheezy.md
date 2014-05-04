@@ -257,13 +257,14 @@ Create the following file named `run` in each of the `zotero-*` dirs:
     #!/bin/sh
     
     cd /srv/zotero/dataserver/processor/download
+    exec 2>&1
     exec chpst -u www-data:www-data php5 daemon.php
 
 And the following file named `run` in each of the `log` subdirs:
 
     #!/bin/sh
     
-    exec svlogd -ttt /srv/zotero/log/download
+    exec svlogd /srv/zotero/log/download
 
 Replace "download" with "upload" and "error" as apropriate.
 
