@@ -171,7 +171,7 @@ Copy the sample file and adjust a few values. The lines you should change are ma
       public static $DEBUG_LOG = false;
       
       public static $BASE_URI = '';
-    + public static $API_BASE_URI = 'https://host.domain.tld/';
+    + public static $API_BASE_URI = 'https://host.domain.tld[:port]/';
       public static $WWW_BASE_URI = '';
     + public static $SYNC_DOMAIN = 'sync.host.domain.tld';
       
@@ -182,7 +182,7 @@ Copy the sample file and adjust a few values. The lines you should change are ma
       public static $AWS_ACCESS_KEY = '';
     + public static $AWS_SECRET_KEY = 'yoursecretkey';
     + public static $S3_BUCKET = 'zotero';
-    + public static $S3_ENDPOINT = 'host.domain.tld';
+    + public static $S3_ENDPOINT = 'host.domain.tld[:port]';
     + public static $S3_USE_SSL = true;
     + public static $S3_VALIDATE_SSL = true;
       
@@ -245,7 +245,7 @@ Copy the sample file and adjust a few values. The lines you should change are ma
     ?>
 
 ##### Using a different port (Optional)
-An alternative port has to be specified as part of the `$API_BASE_URI` and also in the relevant URLs of the [client patch](https://github.com/sualk/dataserver/wiki/Zotero-Client).
+An alternative port has to be specified as part of the `$API_BASE_URI`, the `$S3_ENDPOINT` and also in the `SYNC_URL` and `API_URL` of the [client patch](https://github.com/sualk/dataserver/wiki/Zotero-Client).
 
 ### Processor daemons
 The upload, download and error processor daemons need to run for syncing with the zotero clients to work.
