@@ -297,7 +297,7 @@ to fit your installation. With zss installed to /srv/zotero/zss/ the line should
 Adjust the path to your storage directory and set the secretkey to something random.
 
     $self->{buckets}->{zotero}->{secretkey} = "yoursecretkey";
-    $self->{buckets}->{zotero}->{store} = ZSS::Store->new("/srv/zotero/storage");
+    $self->{buckets}->{zotero}->{store} = ZSS::Store->new("/srv/zotero/storage/");
 
 ### Configure uwsgi
 1. In `/etc/uwsgi/apps-available` create the file `zss.yaml`
