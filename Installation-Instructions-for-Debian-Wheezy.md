@@ -4,7 +4,7 @@
 
 ### dataserver
 * apache2
-* libapach2-mod-php5
+* libapache2-mod-php5
 * mysql-server
 * memcached
 * zendframework
