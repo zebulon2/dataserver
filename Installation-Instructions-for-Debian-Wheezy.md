@@ -280,6 +280,7 @@ To automatically start the daemons create symlinks in `/etc/service`
     git clone git://github.com/sualk/zss.git /srv/zotero/zss
 
 ### Prepare directory rights
+    mkdir /srv/zotero/storage
     chown www-data:www-data /srv/zotero/storage
 
 ### Configure ZSS
