@@ -328,3 +328,9 @@ Access to `https://host.domain.tld/zotero/` should result in the following outpu
 Access to `https://host.domain.tld/users/1/items` should result in the following output
 
     Not found
+
+Access to `https://host.domain.tld/itemTypes` should result in the following output
+
+    [{"itemType":"artwork","localized":"Artwork"},{"itemType":"audioRecording","localized":"Audio Recording"},{"itemType":"bill","localized":"Bill"},
+    [... a lot more of these itemType records ...]
+    {"itemType":"videoRecording","localized":"Video Recording"},{"itemType":"webpage","localized":"Web Page"}]
