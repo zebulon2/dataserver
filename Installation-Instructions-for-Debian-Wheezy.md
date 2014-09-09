@@ -157,6 +157,7 @@ The lines you should change are marked with a `+` at the beginning.
 #### config.inc.php
 Copy the sample file and adjust a few values. The lines you should change are marked with a `+` at the beginning.
 `host.domain.tld` should be the same as in your SSL certificate. If you use a self signed certificate the SSL validation must be deactivated.
+`$SYNC_DOMAIN` should just contain `sync`. It does not need to be a valid resolvable domain name.
 
     <?
     class Z_CONFIG {
@@ -173,7 +174,7 @@ Copy the sample file and adjust a few values. The lines you should change are ma
       public static $BASE_URI = '';
     + public static $API_BASE_URI = 'https://host.domain.tld[:port]/';
       public static $WWW_BASE_URI = '';
-    + public static $SYNC_DOMAIN = 'sync.host.domain.tld';
+    + public static $SYNC_DOMAIN = 'sync';
       
       public static $AUTH_SALT = '';
     + public static $API_SUPER_USERNAME = 'someusername';
@@ -187,7 +188,7 @@ Copy the sample file and adjust a few values. The lines you should change are ma
     + public static $S3_VALIDATE_SSL = true;
       
     + public static $URI_PREFIX_DOMAIN_MAP = array(
-    +   '/sync/' => 'sync.host.domain.tld'
+    +   '/sync/' => 'sync'
     + );
       
       public static $MEMCACHED_ENABLED = true;
