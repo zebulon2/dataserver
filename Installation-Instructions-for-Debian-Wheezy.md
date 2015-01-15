@@ -335,3 +335,40 @@ Access to `https://host.domain.tld/itemTypes` should result in the following out
     [{"itemType":"artwork","localized":"Artwork"},{"itemType":"audioRecording","localized":"Audio Recording"},{"itemType":"bill","localized":"Bill"},
     [... a lot more of these itemType records ...]
     {"itemType":"videoRecording","localized":"Video Recording"},{"itemType":"webpage","localized":"Web Page"}]
+
+## Differences when installing on Ubuntu Server 14.04 LTS
+The above instructions also work to a large degree when installing the dataserver on an Ubuntu Server 14.04 LTS system.  Here are some issues that need to be taken care of:
+
+### Zend
+The Zend package is called "zend-framework" (with a dash). The Zend hierarchy starts at /usr/share/php/libzend-framework-php/Zend, so the symlink needs to be adapted:
+
+    cd /srv/zotero/dataserver/include
+    rm -r Zend
+    ln -s /usr/share/php/libzend-framework-php/Zend
+
+### Apache
+Ubuntu 14.04 LTS comes with apache 2.4, so the access control config needs to be adapted ("Order" and "Allow From" no longer work). See "Access control" in the [upgrading docs](http://httpd.apache.org/docs/2.4/upgrading.html). Adapt the VirtualHost configuration and the .htaccess file to suit your needs.  You may also try the backwards compatibility module mod_access_compat but the upgrade guide suggests updating the configuration instead.
+
+short_open_tags is disabled by default but Zotero currently relies on it. Add
+
+    php_value short_open_tag 1
+
+to your VirtualHost configuration to enable it.
+
+### ZSS
+Switch.pm which is required by the zss cannot be found. It is available as a package though:
+
+    apt-get install libswitch-perl
+
+### runit
+The runit services require manual creation of the log directories:
+
+    mkdir -p /srv/zotero/log/{upload,download,error}
+
+### Zend application log
+Logging directories for sync and API need manual creation according to the values set in config.inc.php ($SYNC_ERROR_PATH and $API_ERROR_PATH), e.g. 
+
+    mkdir -p /var/log/httpd/{sync-errors,api-errors}/
+    chown www-data: /var/log/httpd/{sync-errors,api-errors}/
+
+
