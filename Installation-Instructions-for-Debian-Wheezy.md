@@ -337,7 +337,7 @@ Access to `https://host.domain.tld/itemTypes` should result in the following out
     {"itemType":"videoRecording","localized":"Video Recording"},{"itemType":"webpage","localized":"Web Page"}]
 
 ## Differences when installing on Ubuntu Server 14.04 LTS
-The above instructions also work to a large degree when installing the dataserver on an Ubuntu Server 14.04 LTS system.  Here are some issues that need to be taken care of:
+The above instructions also work to a large degree when installing the dataserver on an Ubuntu Server 14.04 LTS system.  Here are some issues that need to be taken care of though:
 
 ### Zend
 The Zend package is called "zend-framework" (with a dash). The Zend hierarchy starts at /usr/share/php/libzend-framework-php/Zend, so the symlink needs to be adapted:
