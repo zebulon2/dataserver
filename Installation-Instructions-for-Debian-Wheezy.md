@@ -79,6 +79,10 @@ Use the packaged version
         AllowOverride All
         Order allow,deny
         Allow from all
+        # If you are using a more recent version of apache 
+        # and are getting 403 errors, replace the Order and
+        # Allow lines with:
+        # Require all granted
       </Directory>
     
       ErrorLog /srv/zotero/error.log
