@@ -120,13 +120,9 @@ class StorageController extends ApiController {
 		$xml = new SimpleXMLElement('<storage/>');
 		$quota = Zotero_Storage::getEffectiveUserQuota($this->objectUserID);
 		$xml->quota = $quota;
-		$instQuota = Zotero_Storage::getInstitutionalUserQuota($this->objectUserID);
-		// If personal quota is in effect
-		if (!$instQuota || $quota > $instQuota) {
-			$values = Zotero_Storage::getUserValues($this->objectUserID);
-			if ($values) {
-				$xml->expiration = (int) $values['expiration'];
-			}
+		$values = Zotero_Storage::getUserValues($this->objectUserID);
+		if ($values) {
+			$xml->expiration = (int) $values['expiration'];
 		}
 		// Return 'unlimited' via API
 		if ($quota == self::UNLIMITED) {
