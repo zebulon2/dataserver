@@ -47,7 +47,7 @@ class Z_MemcachedClientLocal {
 			return false;
 		}
 		
-		$this->client = new Memcached($prefix);
+		$this->client = new Memcached();
 		
 		// If persistent connection isn't initialized, set it up
 		$serverList = $this->client->getServerList();
