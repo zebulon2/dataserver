@@ -28,13 +28,8 @@ class Zotero_AuthenticationPlugin_Password implements Zotero_AuthenticationPlugi
 	public static function authenticate($data) {
 		$salt = Z_CONFIG::$AUTH_SALT;
 		
-		// TODO: config
-		$dev = Z_ENV_TESTING_SITE ? "_test" : "";
-		$databaseName = "zotero_www{$dev}";
-		
 		$username = $data['username'];
 		$password = $data['password'];
-		$isEmailAddress = strpos($username, '@') !== false;
 		
 		$cacheKey = 'userAuthHash_' . hash('sha256', $username . $password);
 		$userID = Z_Core::$MC->get($cacheKey);
@@ -43,34 +38,10 @@ class Zotero_AuthenticationPlugin_Password implements Zotero_AuthenticationPlugi
 		}
 		
 		// Username
-		if (!$isEmailAddress) {
-			$sql = "SELECT userID, username, password AS hash FROM $databaseName.users WHERE username=?";
-			$params = [$username];
-		}
-		else {
-			$sql = "SELECT userID, username, password AS hash FROM $databaseName.users
-			   WHERE username = ?
-			   UNION
-			   SELECT userID, username, password AS hash FROM $databaseName.users
-			   WHERE email = ?
-			   ORDER BY username = ? DESC";
-			$params = [$username, $username, $username];
-		}
+		$sql = "SELECT userID, username, password AS hash FROM users WHERE username=?";
+		$params = [$username];
 		
-		try {
-			$retry = true;
-			$rows = Zotero_WWW_DB_2::query($sql, $params);
-			if (!$rows) {
-				$retry = false;
-				$rows = Zotero_WWW_DB_1::query($sql, $params);
-			}
-		}
-		catch (Exception $e) {
-			if ($retry) {
-				Z_Core::logError("WARNING: $e -- retrying on primary");
-				$rows = Zotero_WWW_DB_1::query($sql, $params);
-			}
-		}
+		$rows = Zotero_DB::query($sql, $params);
 		
 		if (!$rows) {
 			return false;
@@ -78,17 +49,9 @@ class Zotero_AuthenticationPlugin_Password implements Zotero_AuthenticationPlugi
 		
 		$found = false;
 		foreach ($rows as $row) {
-			// Try bcrypt
-			$found = password_verify($password, $row['hash']);
-			
 			// Try salted SHA1
 			if (!$found) {
 				$found = sha1($salt . $password) == $row['hash'];
-			}
-			
-			// Try MD5
-			if (!$found) {
-				$found = md5($password) == $row['hash'];
 			}
 			
 			if ($found) {
@@ -101,23 +64,8 @@ class Zotero_AuthenticationPlugin_Password implements Zotero_AuthenticationPlugi
 			return false;
 		}
 		
-		self::updateUser($foundRow['userID'], $foundRow['username']);
 		Z_Core::$MC->set($cacheKey, $foundRow['userID'], 60);
 		return $foundRow['userID'];
-	}
-	
-	
-	private static function updateUser($userID, $username) {
-		if (Zotero_Users::exists($userID)) {
-			$currentUsername = Zotero_Users::getUsername($userID, true);
-			if ($currentUsername != $username) {
-				Zotero_Users::update($userID, $username);
-			}
-		}
-		else {
-			Zotero_Users::add($userID, $username);
-			Zotero_Users::update($userID);
-		}
 	}
 }
 ?>

@@ -442,6 +442,7 @@ CREATE TABLE `users` (
   `userID` int(10) unsigned NOT NULL,
   `libraryID` int(10) unsigned NOT NULL,
   `username` varchar(255) NOT NULL,
+  `password` char(40) NULL,
   `joined` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `lastSyncTime` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY (`userID`),
