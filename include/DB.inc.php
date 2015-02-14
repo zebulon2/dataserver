@@ -76,13 +76,7 @@ class Zotero_DB {
 	
 	
 	protected function getShardLink($shardID, $forWriting=false) {
-		// TEMP
-		if (get_called_class() == 'Zotero_FullText_DB') {
-			$linkID = "FT" . $shardID;
-		}
-		else {
-			$linkID = $shardID;
-		}
+		$linkID = $shardID;
 		
 		if (isset($this->links[$linkID])) {
 			return $this->links[$linkID];
@@ -116,14 +110,8 @@ class Zotero_DB {
 			)
 		);
 		
-		// TEMP: For now, use separate host
-		if (get_called_class() == 'Zotero_FullText_DB') {
-			$auth = Zotero_DBConnectAuth('fulltext');
-			$config['host'] = $auth['host'];
-			$config['port'] = $auth['port'];
-		}
 		// For admin, use user/pass from master
-		else if (get_called_class() == 'Zotero_Admin_DB') {
+		if (get_called_class() == 'Zotero_Admin_DB') {
 			$auth = Zotero_DBConnectAuth($this->db);
 			$config['username'] = $auth['user'];
 			$config['password'] = $auth['pass'];
@@ -1035,15 +1023,6 @@ class Zotero_DB {
 }
 
 
-class Zotero_FullText_DB extends Zotero_DB {
-	protected $db = 'fulltext';
-	
-	protected function __construct() {
-		parent::__construct();
-	}
-}
-
-
 //
 // TODO: Handle failover here instead of in calling code
 //
@@ -1058,33 +1037,6 @@ class Zotero_ID_DB_1 extends Zotero_DB {
 
 class Zotero_ID_DB_2 extends Zotero_DB {
 	protected $db = 'id2';
-	
-	protected function __construct() {
-		parent::__construct();
-	}
-}
-
-
-class Zotero_WWW_DB_1 extends Zotero_DB {
-	protected $db = 'www1';
-	
-	protected function __construct() {
-		parent::__construct();
-	}
-}
-
-
-class Zotero_WWW_DB_2 extends Zotero_DB {
-	protected $db = 'www2';
-	
-	protected function __construct() {
-		parent::__construct();
-	}
-}
-
-
-class Zotero_Cache_DB extends Zotero_DB {
-	protected $db = 'cache';
 	
 	protected function __construct() {
 		parent::__construct();
