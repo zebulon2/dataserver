@@ -331,18 +331,6 @@ class Zotero_Users {
 		
 		$username = Zotero_Users::getUsername($userID, true);
 		
-		$sql = "SELECT LUM_Role.Name FROM LUM_User JOIN LUM_Role USING (RoleID) WHERE UserID=?";
-		try {
-			$role = Zotero_WWW_DB_2::valueQuery($sql, $userID);
-		}
-		catch (Exception $e) {
-			Z_Core::logError("WARNING: $e -- retrying on primary");
-			$role = Zotero_WWW_DB_1::valueQuery($sql, $userID);
-		}
-		if ($role != 'Deleted') {
-			throw new Exception("User '$username' does not have role 'Deleted'");
-		}
-		
 		Zotero_DB::beginTransaction();
 		
 		if (Zotero_Groups::getUserOwnedGroups($userID)) {
