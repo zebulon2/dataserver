@@ -56,7 +56,7 @@ class Z_MemcachedClientLocal {
 				Memcached::OPT_PREFIX_KEY => $prefix,
 				Memcached::OPT_LIBKETAMA_COMPATIBLE => true,
 				Memcached::OPT_BINARY_PROTOCOL => true,
-				Memcached::OPT_SERIALIZER => Memcached::SERIALIZER_IGBINARY,
+				Memcached::OPT_SERIALIZER => Memcached::SERIALIZER_PHP,
 				Memcached::OPT_NO_BLOCK => true,
 				Memcached::OPT_TCP_NODELAY => true,
 				Memcached::OPT_REMOVE_FAILED_SERVERS => true,
