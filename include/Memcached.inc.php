@@ -50,7 +50,8 @@ class Z_MemcachedClientLocal {
 		$this->client = new Memcached($prefix);
 		
 		// If persistent connection isn't initialized, set it up
-		if (empty($this->client->getServerList())) {
+		$serverList = $this->client->getServerList();
+		if (empty($serverList)) {
 			$this->client->setOptions([
 				Memcached::OPT_PREFIX_KEY => $prefix,
 				Memcached::OPT_LIBKETAMA_COMPATIBLE => true,
