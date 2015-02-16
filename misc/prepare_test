@@ -1,0 +1,28 @@
+#!/bin/sh
+DB="mysql -h 127.0.0.1 -P 3306 -u root -pPW"
+
+# For the local tests the zotero mysql-user needs the right to create and drop a table named test inside zotero_master DB.
+echo "GRANT CREATE,DROP ON zotero_master.test TO zotero@localhost" | $DB
+
+# Create the two testusers
+../admin/add_user 1 testuser
+../admin/add_user 2 testuser2
+
+# and set their passwords
+echo "UPDATE users SET password=sha1('letmein') WHERE userID=1" | $DB zotero_master
+echo "UPDATE users SET password=sha1('letmein2') WHERE userID=2" | $DB zotero_master
+
+# Create the required private and public groups
+../admin/add_group -o testuser -t Private -f members -r members -e members "Private Group 1"
+../admin/add_group -o testuser -t PublicClosed -f admins -r all -e members "Public Group 1"
+
+../admin/add_groupuser "Private Group 1" testuser2 member
+
+../admin/add_group -o testuser2 -t Private -f members -r members -e members "Private Group 2"
+
+# Prepare API Key
+echo "INSERT INTO \`keys\` (\`key\`, userID, name) VALUES ('123456789012345678901234', 1, 'Key for tests')" | $DB zotero_master
+echo "INSERT INTO keyPermissions (keyID, libraryID, permission, granted) VALUES (1, 1, 'library', 1)" | $DB zotero_master
+echo "INSERT INTO keyPermissions (keyID, libraryID, permission, granted) VALUES (1, 1, 'write', 1)" | $DB zotero_master
+echo "INSERT INTO keyPermissions (keyID, libraryID, permission, granted) VALUES (1, 3, 'library', 1)" | $DB zotero_master
+echo "INSERT INTO keyPermissions (keyID, libraryID, permission, granted) VALUES (1, 3, 'write', 1)" | $DB zotero_master
