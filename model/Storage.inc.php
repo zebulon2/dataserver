@@ -28,6 +28,14 @@ class Zotero_Storage {
 	public static $defaultQuota = 300;
 	public static $uploadQueueLimit = 10;
 	public static $uploadQueueTimeout = 300;
+
+	public static function requireLibrary() {
+		require_once('S3Lib.inc.php');
+		S3::setAuth(Z_CONFIG::$AWS_ACCESS_KEY, Z_CONFIG::$AWS_SECRET_KEY);
+		S3::setEndpoint(Z_CONFIG::$S3_ENDPOINT);
+		S3::setSSL(Z_CONFIG::$S3_USE_SSL, Z_CONFIG::$S3_VALIDATE_SSL);
+		S3::setExceptions(true);
+	}
 	
 	public static function getDownloadDetails($item) {
 		// TODO: get attachment link mode value from somewhere
@@ -73,34 +81,38 @@ class Zotero_Storage {
 			$charset = preg_replace('/[^A-Za-z0-9\-]/', '', $charset);
 			$contentType .= "; charset=$charset";
 		}
+
+		$key = $info['hash'];
 		
-		$s3Client = Z_Core::$AWS->get('s3');
-		try {
-			$key = $info['hash'];
-			$s3Client->headObject([
-				'Bucket' => Z_CONFIG::$S3_BUCKET,
-				'Key' => $info['hash']
-			]);
-		}
-		catch (\Aws\S3\Exception\NoSuchKeyException $e) {
+		self::requireLibrary();
+		$remoteInfo = S3::getObjectInfo(
+			Z_CONFIG::$S3_BUCKET,
+			$key,
+			true
+		);
+		if (!$remoteInfo) {
 			// Try legacy key format, with zip flag and filename
-			try {
-				$key = self::getPathPrefix($info['hash'], $info['zip']) . $info['filename'];
-				$s3Client->headObject([
-					'Bucket' => Z_CONFIG::$S3_BUCKET,
-					'Key' => $key
-				]);
-			}
-			catch (\Aws\S3\Exception\NoSuchKeyException $e) {
+			$key = self::getPathPrefix($info['hash'], $info['zip']) . $info['filename'];
+			$remoteInfo = S3::getObjectInfo(
+				Z_CONFIG::$S3_BUCKET,
+				$key,
+				true
+			);
+			if (!$remoteInfo) {
 				return false;
 			}
 		}
-		
-		return $s3Client->getCommand('GetObject', array(
-			'Bucket' => Z_CONFIG::$S3_BUCKET,
-			'Key' => $key,
-			'ResponseContentType' => $contentType
-		))->createPresignedUrl("+$ttl seconds");
+
+		// Create expiring URL on Amazon and return
+		$url = S3::getAuthenticatedURL(
+			Z_CONFIG::$S3_BUCKET,
+			$key,
+			$ttl,
+			false,
+			Z_CONFIG::$S3_USE_SSL
+		);
+
+		return $url;
 	}
 	
 	
@@ -113,28 +125,25 @@ class Zotero_Storage {
 			throw new Exception("'$savePath' is not a directory");
 		}
 		
-		$s3Client = Z_Core::$AWS->get('s3');
-		try {
-			return $s3Client->getObject([
-				'Bucket' => Z_CONFIG::$S3_BUCKET,
-				'Key' => $localFileItemInfo['hash'],
-				'SaveAs' => $savePath . "/" . ($filename ? $filename : $localFileItemInfo['filename'])
-			]);
-		}
-		catch (\Aws\S3\Exception\NoSuchKeyException $e) {
+		self::requireLibrary();
+		$response = S3::getObject(
+			Z_CONFIG::$S3_BUCKET,
+			$localFileItemInfo['hash'],
+			$savePath . "/" . ($filename ? $filename : $localFileItemInfo['filename'])
+		);
+		if (!$response) {
 			// Try legacy key format, with zip flag and filename
-			try {
-				return $s3Client->getObject([
-					'Bucket' => Z_CONFIG::$S3_BUCKET,
-					'Key' => self::getPathPrefix($localFileItemInfo['hash'], $localFileItemInfo['zip'])
-						. $localFileItemInfo['filename'],
-					'SaveAs' => $savePath . "/" . ($filename ? $filename : $localFileItemInfo['filename'])
-				]);
-			}
-			catch (\Aws\S3\Exception\NoSuchKeyException $e) {
+			$response = S3::getObject(
+				Z_CONFIG::$S3_BUCKET,
+				self::getPathPrefix($localFileItemInfo['hash'], $localFileItemInfo['zip']) . $localFileItemInfo['filename'],
+				$savePath . "/" . ($filename ? $filename : $localFileItemInfo['filename'])
+			);
+			if (!$response) {
 				return false;
 			}
 		}
+		
+		return $response;
 	}
 	
 	public static function logDownload($item, $downloadUserID, $ipAddress) {
@@ -157,14 +166,17 @@ class Zotero_Storage {
 		if (!file_exists($file)) {
 			throw new Exception("File '$file' does not exist");
 		}
-		
-		$s3Client = Z_Core::$AWS->get('s3');
-		$s3Client->putObject([
-			'SourceFile' => $file,
-			'Bucket' => Z_CONFIG::$S3_BUCKET,
-			'Key' => $info->hash,
-			'ACL' => 'private'
-		]);
+
+		self::requireLibrary();
+		$success = S3::putObject(
+			S3::inputFile($file),
+			Z_CONFIG::$S3_BUCKET,
+			$info->hash,
+			S3::ACL_PRIVATE
+		);
+		if (!$success) {
+			return false;
+		}
 		
 		return self::addFile($info);
 	}
@@ -243,7 +255,7 @@ class Zotero_Storage {
 	
 	
 	public static function getUploadBaseURL() {
-		return "https://" . Z_CONFIG::$S3_BUCKET . ".s3.amazonaws.com/";
+		return (Z_CONFIG::$S3_USE_SSL ? "https://" : "http://") . Z_CONFIG::$S3_ENDPOINT . "/" . Z_CONFIG::$S3_BUCKET . "/";
 	}
 	
 	
@@ -363,27 +375,23 @@ class Zotero_Storage {
 		if (!$localInfo) {
 			throw new Exception("File $storageFileID not found");
 		}
-		
-		$s3Client = Z_Core::$AWS->get('s3');
-		try {
-			$s3Client->headObject([
-				'Bucket' => Z_CONFIG::$S3_BUCKET,
-				'Key' => $localInfo['hash']
-			]);
-		}
+
+		self::requireLibrary();
+		$remoteInfo = S3::getObjectInfo(
+			Z_CONFIG::$S3_BUCKET,
+			$localInfo['hash'],
+			true
+		);
 		// If file doesn't already exist named with just hash, copy it over
-		catch (\Aws\S3\Exception\NoSuchKeyException $e) {
-			try {
-				$s3Client->copyObject([
-					'Bucket' => Z_CONFIG::$S3_BUCKET,
-					'CopySource' => Z_CONFIG::$S3_BUCKET . '/'
-						. urlencode(self::getPathPrefix($localInfo['hash'], $localInfo['zip'])
-							. $localInfo['filename']),
-					'Key' => $localInfo['hash'],
-					'ACL' => 'private'
-				]);
-			}
-			catch (\Aws\S3\Exception\NoSuchKeyException $e) {
+		if (!$remoteInfo) {
+			$success = S3::copyObject(
+				Z_CONFIG::$S3_BUCKET,
+				self::getPathPrefix($localInfo['hash'], $localInfo['zip']) . $localInfo['filename'],
+				Z_CONFIG::$S3_BUCKET,
+				$localInfo['hash'],
+				S3::ACL_PRIVATE
+			);
+			if (!$success) {
 				return false;
 			}
 		}
@@ -413,28 +421,26 @@ class Zotero_Storage {
 	}
 	
 	public static function getRemoteFileInfo(Zotero_StorageFileInfo $info) {
-		$s3Client = Z_Core::$AWS->get('s3');
-		try {
-			$result = $s3Client->headObject([
-				'Bucket' => Z_CONFIG::$S3_BUCKET,
-				'Key' => $info->hash
-			]);
-		}
-		catch (\Aws\S3\Exception\NoSuchKeyException $e) {
+		self::requireLibrary();
+		$remoteInfo = S3::getObjectInfo(
+			Z_CONFIG::$S3_BUCKET,
+			$info->hash,
+			true
+		);
+		if (!$remoteInfo) {
 			// Try legacy key format, with zip flag and filename
-			try {
-				$result = $s3Client->headObject([
-					'Bucket' => Z_CONFIG::$S3_BUCKET,
-					'Key' => self::getPathPrefix($info->hash, $info->zip) . $info->filename
-				]);
-			}
-			catch (\Aws\S3\Exception\NoSuchKeyException $e) {
+			$remoteInfo = S3::getObjectInfo(
+				Z_CONFIG::$S3_BUCKET,
+				self::getPathPrefix($info->hash, $info->zip) . $info->filename,
+				true
+			);
+			if (!$remoteInfo) {
 				return false;
 			}
 		}
-		
+
 		$storageFileInfo = new Zotero_StorageFileInfo;
-		$storageFileInfo->size = $result['ContentLength'];
+		$storageFileInfo->size = $remoteInfo['size'];
 		
 		return $storageFileInfo;
 	}
@@ -682,26 +688,25 @@ class Zotero_Storage {
 		}
 		$contentMD5 = base64_encode($contentMD5);
 		
-		$s3Client = Z_Core::$AWS->get('s3');
-		$credentials = $s3Client->getCredentials();
-		$config = [
-			'acl' => 'private',
-			'key' => $info->hash,
-			'ttd' => time() + $lifetime,
-			'success_action_status' => $successStatus,
+		$metaHeaders = array();
+		$requestHeaders = array(
 			'Content-MD5' => $contentMD5
-		];
-		// Add security token from IAM role
-		if ($token = $credentials->getSecurityToken()) {
-            $config['x-amz-security-token'] = $token;
-        }
-        $postObject = new Aws\S3\Model\PostObject(
-			$s3Client,
-			Z_CONFIG::$S3_BUCKET,
-			$config
 		);
-		$postObject->prepareData();
-		return $postObject->getFormInputs();
+		
+		self::requireLibrary();
+		$params = S3::getHttpUploadPostParams(
+			Z_CONFIG::$S3_BUCKET,
+			'',
+			S3::ACL_PRIVATE,
+			$lifetime,
+			$info->size + 262144, // an extra 256KB that may or may not be necessary
+			$successStatus,
+			$metaHeaders,
+			$requestHeaders,
+			$info->hash
+		);
+		
+		return $params;
 	}
 	
 	

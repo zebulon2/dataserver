@@ -142,9 +142,6 @@ if (file_exists(Z_ENV_BASE_PATH . 'include/config/custom.inc.php')) {
 	require('config/custom.inc.php');
 }
 
-// Composer autoloads
-require Z_ENV_BASE_PATH . 'vendor/autoload.php';
-
 require('HTMLPurifier/HTMLPurifier.standalone.php');
 $c = HTMLPurifier_Config::createDefault();
 $c->set('HTML.Doctype', 'XHTML 1.0 Strict');
@@ -205,26 +202,6 @@ Z_Core::$MC = new Z_MemcachedClientLocal(
 Zotero_DB::addCallback("begin", array(Z_Core::$MC, "begin"));
 Zotero_DB::addCallback("commit", array(Z_Core::$MC, "commit"));
 Zotero_DB::addCallback("reset", array(Z_Core::$MC, "reset"));
-
-//
-// Set up AWS service factory
-//
-$awsConfig = [
-	'region' => !empty(Z_CONFIG::$AWS_REGION) ? Z_CONFIG::$AWS_REGION : 'us-east-1'
-];
-// IAM role authentication
-if (empty(Z_CONFIG::$AWS_ACCESS_KEY)) {
-	$awsConfig['credentials.cache'] = new Guzzle\Cache\DoctrineCacheAdapter(
-		new Doctrine\Common\Cache\FilesystemCache(Z_ENV_BASE_PATH . 'tmp/cache')
-	);
-}
-// Access key and secret
-else {
-	$awsConfig['key'] = Z_CONFIG::$AWS_ACCESS_KEY;
-	$awsConfig['secret'] = Z_CONFIG::$AWS_SECRET_KEY;
-}
-Z_Core::$AWS = \Aws\Common\Aws::factory($awsConfig);
-unset($awsConfig);
 
 // Elastica
 Z_Core::$Elastica = new \Elastica\Client(array(
