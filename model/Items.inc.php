@@ -351,17 +351,6 @@ class Zotero_Items extends Zotero_DataObjects {
 			$sql .= "OR SUBSTR(IDD.value, 1, 4) = ?";
 			$sqlParams[] = $params['q'];
 			
-			// Full-text search
-			if ($params['qmode'] == 'everything') {
-				$ftKeys = Zotero_FullText::searchInLibrary($libraryID, $params['q']);
-				if ($ftKeys) {
-					$sql .= " OR I.key IN ("
-						. implode(', ', array_fill(0, sizeOf($ftKeys), '?'))
-						. ") ";
-					$sqlParams = array_merge($sqlParams, $ftKeys);
-				}
-			}
-			
 			$sql .= ") ";
 		}
 		

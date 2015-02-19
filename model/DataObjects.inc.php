@@ -655,10 +655,6 @@ class Zotero_DataObjects {
 			$tagName = $obj->name;
 		}
 		
-		if ($type == 'item' && $obj->isAttachment()) {
-			Zotero_FullText::deleteItemContent($obj);
-		}
-		
 		$sql = "DELETE FROM $table WHERE libraryID=? AND `$keyField`=?";
 		$deleted = Zotero_DB::query($sql, array($libraryID, $key), $shardID);
 		

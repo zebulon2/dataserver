@@ -1148,47 +1148,6 @@ class Zotero_Sync {
 				}
 			}
 			
-			// Add full-text content if the client supports it
-			if (isset($params['ft'])) {
-				$libraries = Zotero_Libraries::getUserLibraries($userID);
-				$fulltextNode = false;
-				foreach ($libraries as $libraryID) {
-					if (!empty($params['ftkeys']) && $params['ftkeys'] === 'all') {
-						$ftlastsync = 1;
-					}
-					else {
-						$ftlastsync = $lastsync;
-					}
-					if (!empty($params['ftkeys'][$libraryID])) {
-						$keys = $params['ftkeys'][$libraryID];
-					}
-					else {
-						$keys = [];
-					}
-					$data = Zotero_FullText::getNewerInLibraryByTime($libraryID, $ftlastsync, $keys);
-					if ($data) {
-						if (!$fulltextNode) {
-							$fulltextNode = $doc->createElement('fulltexts');
-						}
-						foreach ($data as $itemData) {
-							if ($params['ft']) {
-								$empty = $itemData['empty'];
-							}
-							// If full-text syncing is disabled, leave content empty
-							else {
-								$empty = true;
-							}
-							$first = false;
-							$node = Zotero_FullText::itemDataToXML($itemData, $doc, $empty);
-							$fulltextNode->appendChild($node);
-						}
-					}
-				}
-				if ($fulltextNode) {
-					$updatedNode->appendChild($fulltextNode);
-				}
-			}
-			
 			// Get earliest timestamp
 			$earliestModTime = Zotero_Users::getEarliestDataTimestamp($userID);
 			$doc->documentElement->setAttribute('earliest', $earliestModTime ? $earliestModTime : 0);
@@ -1564,16 +1523,6 @@ class Zotero_Sync {
 					$settingObj->save($userID);
 				}
 				unset($xml->settings);
-			}
-			
-			if ($xml->fulltexts) {
-				// DOM
-				$xmlElements = dom_import_simplexml($xml->fulltexts);
-				$xmlElements = $xmlElements->getElementsByTagName('fulltext');
-				foreach ($xmlElements as $xmlElement) {
-					Zotero_FullText::indexFromXML($xmlElement, $userID);
-				}
-				unset($xml->fulltexts);
 			}
 			
 			// TODO: loop

@@ -414,10 +414,6 @@ class Zotero_Libraries {
 		
 		self::deleteCachedData($libraryID);
 		
-		// Because of the foreign key constraint on the itemID, delete MySQL full-text rows
-		// first, and then clear from Elasticsearch below
-		Zotero_FullText::deleteByLibraryMySQL($libraryID);
-		
 		foreach ($tables as $table) {
 			// Delete notes and attachments first (since they may be child items)
 			if ($table == 'items') {
@@ -428,8 +424,6 @@ class Zotero_Libraries {
 			$sql = "DELETE FROM $table WHERE libraryID=?";
 			Zotero_DB::query($sql, $libraryID, $shardID);
 		}
-		
-		Zotero_FullText::deleteByLibrary($libraryID);
 		
 		self::updateVersion($libraryID);
 		self::updateTimestamps($libraryID);
