@@ -283,34 +283,6 @@ class Zotero_Key {
 		
 		$this->permissions = $newPermissions;
 		
-		// Send notifications for added and removed API key – library pairs
-		if (!$isNew) {
-			$librariesToAdd = $this->permissionsDiff(
-				$oldPermissions, $newPermissions, $this->userID
-			);
-			$librariesToRemove = $this->permissionsDiff(
-				$newPermissions, $oldPermissions, $this->userID
-			);
-			if ($librariesToAdd) {
-				Zotero_Notifier::trigger(
-					'add',
-					'apikey-library',
-					array_map(function ($libraryID) {
-						return $this->key . "-" . $libraryID;
-					}, array_unique($librariesToAdd))
-				);
-			}
-			if ($librariesToRemove) {
-				Zotero_Notifier::trigger(
-					'remove',
-					'apikey-library',
-					array_map(function ($libraryID) {
-						return $this->key . "-" . $libraryID;
-					}, array_unique($librariesToRemove))
-				);
-			}
-		}
-		
 		Zotero_DB::commit();
 		
 		$this->load();

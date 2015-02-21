@@ -2121,11 +2121,9 @@ class Zotero_Item {
 		$this->reload();
 		
 		if ($isNew) {
-			Zotero_Notifier::trigger('add', 'item', $this->libraryID . "/" . $this->key);
 			return $this->id;
 		}
 		
-		Zotero_Notifier::trigger('modify', 'item', $this->libraryID . "/" . $this->key);
 		return true;
 	}
 	

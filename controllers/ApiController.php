@@ -77,21 +77,6 @@ class ApiController extends Controller {
 		set_error_handler(array($this, 'handleError'), E_USER_ERROR | E_RECOVERABLE_ERROR);
 		require_once('../model/Error.inc.php');
 		
-		// On testing sites, include notifications in headers
-		if (Z_CONFIG::$TESTING_SITE) {
-			Zotero_NotifierObserver::addMessageReceiver(function ($topic, $msg) {
-				$header = "Zotero-Debug-Notifications";
-				if (!empty($this->headers[$header])) {
-					$notifications = json_decode(base64_decode($this->headers[$header]));
-				}
-				else {
-					$notifications = [];
-				}
-				$notifications[] = $msg;
-				$this->headers[$header] = base64_encode(json_encode($notifications));
-			});
-		}
-		
 		register_shutdown_function(array($this, 'checkDBTransactionState'));
 		register_shutdown_function(array($this, 'addHeaders'));
 		register_shutdown_function(array($this, 'logTotalRequestTime'));
@@ -736,14 +721,6 @@ class ApiController extends Controller {
 		if ($this->libraryVersion) {
 			if ($this->apiVersion >= 2) {
 				header("Last-Modified-Version: " . $this->libraryVersion);
-			}
-			
-			// Send notification if library has changed
-			if ($this->isWriteMethod()) {
-				if ($this->libraryVersion >
-						Zotero_Libraries::getOriginalVersion($this->objectLibraryID)) {
-					Zotero_Notifier::trigger('modify', 'library', $this->objectLibraryID);
-				}
 			}
 		}
 		
