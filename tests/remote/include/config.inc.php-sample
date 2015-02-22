@@ -1,32 +1,32 @@
 <?
 $config = array(
 	'verbose' => 0, // 0 => off, 1 => HTTP requests, 2 => HTTP request/response bodies
-	'syncURLPrefix' => "",
-	'apiURLPrefix' => "",
-	'rootUsername' => "",
-	'rootPassword' => "",
-	'awsRegion' => "us-east-1",
-	's3Bucket' => "",
-	'awsAccessKey' => "", // leave credentials empty to use IAM role
-	'awsSecretKey' => "",
+	'syncURLPrefix' => "https://zoteroserver/sync/",
+	'apiURLPrefix' => "https://zoteroserver/",
+	'rootUsername' => "apisuperuser",
+	'rootPassword' => "apisuperpw",
+	's3Bucket' => "zotero",
+	's3AccessKey' => "",
+	's3SecretKey' => "secretkey",
+	's3Endpoint' => "zoteroserver",
 	'syncVersion' => 9,
 	
 	// User 1
-	'userID' => 0,
-	'libraryID' => 0,
-	'username' => "",
-	'password' => "",
-	'apiKey' => "",
-	'ownedPrivateGroupID' => 0, // should have libraryEditing='members'
-	'ownedPrivateGroupLibraryID' => 0,
-	'ownedPrivateGroupName' => 'Private Test Group',
-	'ownedPublicGroupID' => 0, // should have libraryEditing='members'
+	'userID' => 1,
+	'libraryID' => 1,
+	'username' => "testuser", // user used for sync tests
+	'password' => 'letmein',
+	'apiKey' => "123456789012345678901234",
+	'ownedPrivateGroupID' => 1,
+	'ownedPrivateGroupLibraryID' => 3,
+	'ownedPrivateGroupName' => 'Private Group 1',
+	'ownedPublicGroupID' => 2,
 	
 	// User 2 (should be in user 1's private group)
-	'userID2' => 0,
-	'username2' => "",
-	'password2' => "",
-	'ownedPrivateGroupID2' => 0, // user 1 should not be a member
-	'ownedPrivateGroupLibraryID2' => 0
+	'userID2' => 2,
+	'username2' => "testuser2",
+	'password2' => "letmein2",
+	'ownedPrivateGroupID2' => 3, // user 1 should not be a member
+	'ownedPrivateGroupLibraryID2' => 5
 );
 ?>
