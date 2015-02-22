@@ -109,7 +109,8 @@ class Zotero_Storage {
 			$key,
 			$ttl,
 			false,
-			Z_CONFIG::$S3_USE_SSL
+			Z_CONFIG::$S3_USE_SSL,
+			$contentType
 		);
 
 		return $url;

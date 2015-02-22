@@ -964,14 +964,14 @@ class S3
 	* @param boolean $https Use HTTPS ($hostBucket should be false for SSL verification)
 	* @return string
 	*/
-	public static function getAuthenticatedURL($bucket, $uri, $lifetime, $hostBucket = false, $https = false)
+	public static function getAuthenticatedURL($bucket, $uri, $lifetime, $hostBucket = false, $https = false, $contentType = '')
 	{
 		$expires = time() + $lifetime;
 		$uri = str_replace(array('%2F', '%2B'), array('/', '+'), rawurlencode($uri));
-		return sprintf(($https ? 'https' : 'http').'://%s/%s?AWSAccessKeyId=%s&Expires=%u&Signature=%s',
-		// $hostBucket ? $bucket : $bucket.'.s3.amazonaws.com', $uri, self::$__accessKey, $expires,
+		return sprintf(($https ? 'https' : 'http').'://%s/%s?AWSAccessKeyId=%s&Expires=%u&Signature=%s'.($contentType ? "&response-content-type=%s" : "%s"),
 		$hostBucket ? $bucket : self::$endpoint.'/'.$bucket, $uri, self::$__accessKey, $expires,
-		urlencode(self::__getHash("GET\n\n\n{$expires}\n/{$bucket}/{$uri}")));
+		urlencode(self::__getHash("GET\n\n\n{$expires}\n/{$bucket}/{$uri}".($contentType ? "?response-content-type=${contentType}" : ""))),
+		($contentType ? urlencode($contentType) : ""));
 	}
 
 
