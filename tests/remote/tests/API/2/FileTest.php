@@ -27,6 +27,7 @@
 namespace APIv2;
 use API2 as API, \HTTP, \SimpleXMLElement, \Sync, \Z_Tests, \ZipArchive;
 require_once 'APITests.inc.php';
+require_once '../../model/S3Lib.inc.php';
 require_once 'include/bootstrap.inc.php';
 
 class FileTests extends APITests {
@@ -34,6 +35,11 @@ class FileTests extends APITests {
 	
 	public static function setUpBeforeClass() {
 		parent::setUpBeforeClass();
+		
+		\S3::setAuth(self::$config['s3AccessKey'], self::$config['s3SecretKey']);
+		\S3::setEndpoint(self::$config['s3Endpoint']);
+		\S3::setSSL(true, false);
+		
 		API::userClear(self::$config['userID']);
 	}
 	
@@ -53,16 +59,9 @@ class FileTests extends APITests {
 	public static function tearDownAfterClass() {
 		parent::tearDownAfterClass();
 		
-		$s3Client = Z_Tests::$AWS->get('s3');
-		
 		foreach (self::$toDelete as $file) {
-			try {
-				$s3Client->deleteObject([
-					'Bucket' => self::$config['s3Bucket'],
-					'Key' => $file
-				]);
-			}
-			catch (Aws\S3\Exception\NoSuchKeyException $e) {
+			$deleted = \S3::deleteObject(self::$config['s3Bucket'], $file);
+			if (!$deleted) {
 				echo "\n$file not found on S3 to delete\n";
 			}
 		}
@@ -680,12 +679,7 @@ class FileTests extends APITests {
 		// Upload to old-style location
 		self::$toDelete[] = "$hash/$filename";
 		self::$toDelete[] = "$hash";
-		$s3Client = Z_Tests::$AWS->get('s3');
-		$s3Client->putObject([
-			'Bucket' => self::$config['s3Bucket'],
-			'Key' => $hash . '/' . $filename,
-			'Body' => $fileContents
-		]);
+		\S3::putObject($fileContents, self::$config['s3Bucket'], $hash . '/' . $filename);
 		
 		// Register upload
 		$response = API::userPost(
