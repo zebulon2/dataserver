@@ -1,5 +1,8 @@
 # Installation Instructions for Debian Wheezy
 
+These instructions are for the [dataserver branch 2015.02](https://github.com/sualk/dataserver/tree/2015.02)
+If you are upgrading from a previous version have a look at the Upgrading section.
+
 ## Packages to install
 
 ### dataserver
@@ -9,7 +12,7 @@
 * memcached
 * zendframework
 * php5-cli
-* php5-memcache
+* php5-memcached
 * php5-mysql
 * php5-curl
 
@@ -29,11 +32,12 @@
 * runit
 
 ## Directories
-The following directories are used:
+The following directories are used and should be created:
 * `/srv/zotero/dataserver`: Zotero Dataserver
 * `/srv/zotero/zss`: ZSS
 * `/srv/zotero/storage`: Storage directory for all user and group files
 * `/srv/zotero/log/{download,upload,error}`: Log files of processor daemons
+* `/srv/zotero/log/{api-errors,sync-errors}`: Error Logs from sync or api accesses
 
 ## Dataserver
 ### Download source
@@ -85,8 +89,8 @@ Use the packaged version
         # Require all granted
       </Directory>
     
-      ErrorLog /srv/zotero/error.log
-      CustomLog /srv/zotero/access.log common
+      ErrorLog /srv/zotero/log/error.log
+      CustomLog /srv/zotero/log/access.log common
     </VirtualHost>
 
 #### .htaccess
@@ -162,6 +166,7 @@ The lines you should change are marked with a `+` at the beginning.
 Copy the sample file and adjust a few values. The lines you should change are marked with a `+` at the beginning.
 `host.domain.tld` should be the same as in your SSL certificate. If you use a self signed certificate the SSL validation must be deactivated.
 `$SYNC_DOMAIN` should just contain `sync`. It does not need to be a valid resolvable domain name.
+If you set `$AUTH_SALT` be sure to prepend this string to the user passwords before hashing.
 
     <?
     class Z_CONFIG {
@@ -180,7 +185,7 @@ Copy the sample file and adjust a few values. The lines you should change are ma
       public static $WWW_BASE_URI = '';
     + public static $SYNC_DOMAIN = 'sync';
       
-      public static $AUTH_SALT = '';
+    + public static $AUTH_SALT = 'sometext';
     + public static $API_SUPER_USERNAME = 'someusername';
     + public static $API_SUPER_PASSWORD = 'somepassword';
       
@@ -240,8 +245,8 @@ Copy the sample file and adjust a few values. The lines you should change are ma
       public static $CLI_PHP_PATH = '/usr/bin/php';
     + public static $CLI_DOCUMENT_ROOT = "/srv/zotero/dataserver/";
       
-      public static $SYNC_ERROR_PATH = '/var/log/httpd/sync-errors/';
-      public static $API_ERROR_PATH = '/var/log/httpd/api-errors/';
+    + public static $SYNC_ERROR_PATH = '/srv/zotero/log/sync-errors/';
+    + public static $API_ERROR_PATH = '/srv/zotero/log/api-errors/';
       
       public static $CACHE_VERSION_ATOM_ENTRY = 1;
       public static $CACHE_VERSION_BIB = 1;
@@ -375,4 +380,13 @@ Logging directories for sync and API need manual creation according to the value
     mkdir -p /var/log/httpd/{sync-errors,api-errors}/
     chown www-data: /var/log/httpd/{sync-errors,api-errors}/
 
+## Upgrading from previous versions
 
+### Packages changed
+* php5-memcached instead of php5-memcache
+
+### Database schema
+ToDo
+
+### ZSS
+The latest version of [zss](https://github.com/sualk/zss) is required.
