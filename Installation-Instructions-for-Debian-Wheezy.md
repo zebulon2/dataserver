@@ -127,6 +127,8 @@ The lines you should change are marked with a `+` at the beginning.
 
     <?
     function Zotero_dbConnectAuth($db) {
+            $charset = '';
+    
             if ($db == 'master') {
     +               $host = 'localhost';
                     $port = 3306;
@@ -158,7 +160,14 @@ The lines you should change are marked with a `+` at the beginning.
             else {
                     throw new Exception("Invalid db '$db'");
             }
-            return array('host'=>$host, 'port'=>$port, 'db'=>$db, 'user'=>$user, 'pass'=>$pass);
+            return array(
+              'host'=>$host, 
+              'port'=>$port, 
+              'db'=>$db, 
+              'user'=>$user, 
+              'pass'=>$pass,
+              'charset'=>$charset
+            );
     }
     ?>
 
@@ -167,6 +176,7 @@ Copy the sample file and adjust a few values. The lines you should change are ma
 `host.domain.tld` should be the same as in your SSL certificate. If you use a self signed certificate the SSL validation must be deactivated.
 `$SYNC_DOMAIN` should just contain `sync`. It does not need to be a valid resolvable domain name.
 If you set `$AUTH_SALT` be sure to prepend this string to the user passwords before hashing.
+`$BASE_URI` must be "http://zotero.org/" as it is used for relations and hardcoded in a few places in the dataserver. The zotero client may also require this to be set to "http://zotero.org/".
 
     <?
     class Z_CONFIG {
@@ -180,7 +190,7 @@ If you set `$AUTH_SALT` be sure to prepend this string to the user passwords bef
       
       public static $DEBUG_LOG = false;
       
-      public static $BASE_URI = '';
+    + public static $BASE_URI = 'http://zotero.org/';
     + public static $API_BASE_URI = 'https://host.domain.tld[:port]/';
       public static $WWW_BASE_URI = '';
     + public static $SYNC_DOMAIN = 'sync';
