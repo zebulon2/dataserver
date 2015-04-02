@@ -19,6 +19,4 @@ In the file `chrome/content/zotero/xpcom/zotero.js` the following changes are re
     	VERSION: "4.0.x"
     };
 
-
-
 Starting with version 4.0.25 this configuration can be found in `resource/config.js` instead.

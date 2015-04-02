@@ -1,6 +1,6 @@
 # Installation Instructions for Debian Wheezy
 
-These instructions are for the [dataserver branch 2015.02](https://github.com/sualk/dataserver/tree/2015.02)
+These instructions are for the branch 2015.02.
 If you are upgrading from a previous version have a look at the Upgrading section.
 
 ## Packages to install
@@ -33,6 +33,7 @@ If you are upgrading from a previous version have a look at the Upgrading sectio
 
 ## Directories
 The following directories are used and should be created:
+
 * `/srv/zotero/dataserver`: Zotero Dataserver
 * `/srv/zotero/zss`: ZSS
 * `/srv/zotero/storage`: Storage directory for all user and group files
@@ -41,7 +42,7 @@ The following directories are used and should be created:
 
 ## Dataserver
 ### Download source
-    git clone git://github.com/sualk/dataserver.git /srv/zotero/dataserver
+    git clone git://git.27o.de/dataserver /srv/zotero/dataserver
 
 ### Prepare directory rights
     chown www-data:www-data /srv/zotero/dataserver/tmp
@@ -265,7 +266,7 @@ If you set `$AUTH_SALT` be sure to prepend this string to the user passwords bef
     ?>
 
 ##### Using a different port (Optional)
-An alternative port has to be specified as part of the `$API_BASE_URI`, the `$S3_ENDPOINT` and also in the `SYNC_URL` and `API_URL` of the [client patch](https://github.com/sualk/dataserver/wiki/Zotero-Client).
+An alternative port has to be specified as part of the `$API_BASE_URI`, the `$S3_ENDPOINT` and also in the `SYNC_URL` and `API_URL` of the [client patch](Zotero-Client.md).
 
 ### Processor daemons
 The upload, download and error processor daemons need to run for syncing with the zotero clients to work.
@@ -297,7 +298,7 @@ To automatically start the daemons create symlinks in `/etc/service`
 ## ZSS
 
 ### Download source
-    git clone git://github.com/sualk/zss.git /srv/zotero/zss
+    git clone git://git.27o.de/zss /srv/zotero/zss
 
 ### Prepare directory rights
     mkdir /srv/zotero/storage
@@ -392,12 +393,14 @@ Logging directories for sync and API need manual creation according to the value
 
 ## Upgrading from previous versions
 Before starting to upgrade the following steps should be done:
+
 * Stop the running processors (download, upload and error)
 * Make sure no client connects to the dataserver (e.g. stopping apache)
 * Backup the databases in case of error
 
 ### Changed dependencies and configuration
 The new version uses the php memcached extension instead of the memcache extenstion:
+
 * Remove php5-memcache
 * Install php5-memcached
 
@@ -436,7 +439,7 @@ After changing the values for `key` must be updated as well:
     UPDATE `relations` SET `key`=MD5(CONCAT(`subject`, ' ', `predicate`, ' ', `object`));
 
 ### ZSS
-The latest version of [zss](https://github.com/sualk/zss) is required.
+The latest version of [zss](http://git.27o.de/zss) is required.
 
 ### Memcache
 Before starting the processor daemons and apache again, the memcache should be cleared by restarting the memcached daemon.
